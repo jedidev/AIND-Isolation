@@ -6,7 +6,6 @@ augment the test suite with your own test cases to further test your code.
 You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
-import random
 
 
 class Timeout(Exception):
@@ -37,8 +36,177 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("+inf")
+
+    return increasing_ferocity(game, player)
+
+
+# def minimise_other_player(game, player):
+#
+#     other_player = game.__player_2__
+#     if player == game.__player_2__:
+#         other_player = game.__player_1__
+#
+#     return -len(game.get_legal_moves(other_player))
+#
+#
+# def proximate_to_opponent(game, player):
+#
+#     other_player = game.__player_2__
+#     if player == game.__player_2__:
+#         other_player = game.__player_1__
+#
+#     pr, pc = game.get_player_location(player)
+#     opr, opc = game.get_player_location(other_player)
+#
+#     distance_from_conceptual_border = ((pr - opr) * (pr - opr) + (pc - opc) * (pc - opc))
+#     if distance_from_conceptual_border == 0:
+#         return float("+inf")
+#     return float(1 / distance_from_conceptual_border)
+#
+#
+# def ratio_self_to_other(game, player):
+#
+#     other_player = game.__player_2__
+#     if player == game.__player_2__:
+#         other_player = game.__player_1__
+#
+#     number_player_moves = len(game.get_legal_moves(player))
+#     number_other_player_moves = len(game.get_legal_moves(other_player))
+#     if number_other_player_moves < 1:
+#         return float("+inf")
+#     else:
+#         return float(number_player_moves) / float(number_other_player_moves)
+
+
+def increasing_ferocity(game, player):
+
+    ferocity = 1
+    spaces = game.width * game.height
+    blank_spaces = len(game.get_blank_spaces())
+
+    complete_ratio = float(blank_spaces / spaces)
+
+    if complete_ratio > 0.5:
+        ferocity = 1.5
+
+    if complete_ratio > 0.75:
+        ferocity = 2
+
+    if complete_ratio > 0.825:
+        ferocity = 3
+
+    other_player = game.__player_2__
+    if player == game.__player_2__:
+        other_player = game.__player_1__
+
+    number_moves = len(game.get_legal_moves(player)) - ferocity * len(game.get_legal_moves(other_player))
+    return float(number_moves)
+
+#
+# def other_player_squared_difference_score(game, player):
+#
+#     other_player = game.__player_2__
+#     if player == game.__player_2__:
+#         other_player = game.__player_1__
+#
+#     number_player_moves = len(game.get_legal_moves(player))
+#     number_other_player_moves = len(game.get_legal_moves(other_player))
+#     number_moves = number_player_moves - (number_other_player_moves * number_other_player_moves)
+#     return float(number_moves)
+#
+#
+# def posn_str(posn):
+#     r, c = posn
+#     return str(r) + "," + str(c)
+#
+#
+# def map_partition(game, posn, opp_posn):
+#
+#     partition_space_strings = [posn_str(posn)]
+#     partition_spaces = [posn]
+#     directions = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
+#
+#     new_spaces = True
+#     index = 0
+#     while new_spaces:
+#         new_spaces = False
+#         count = len(partition_spaces)
+#         for n in range(index, count):
+#             for m in directions:
+#                 r, c = partition_spaces[n]
+#                 dr, dc = m
+#                 new_pos = r + dr, c + dc
+#                 new_pos_str = posn_str(new_pos)
+#
+#                 if (game.move_is_legal(new_pos) or new_pos == posn or new_pos == opp_posn) and new_pos_str not in partition_space_strings:
+#                     partition_spaces.append(new_pos)
+#                     partition_space_strings.append(new_pos_str)
+#                     new_spaces = True
+#         index = count
+#
+#     return partition_spaces, partition_space_strings
+#
+#
+# def parity_advantage(game, player):
+#
+#     number_moves = len(game.get_legal_moves(player))
+#
+#     game_size = game.width * game.height
+#     odd_game_size = is_odd(game_size)
+#
+#     number_blank_spaces = len(game.get_blank_spaces())
+#     odd_blank_spaces = is_odd(number_blank_spaces)
+#
+#     opposite_parity = odd_game_size != odd_blank_spaces
+#
+#     if opposite_parity:
+#         return 1000. * number_moves
+#     else:
+#         return number_moves
+#
+#
+# def test_partition(game, player):
+#
+#     other_player = game.__player_2__
+#     if player == game.__player_2__:
+#         return 0.
+#         other_player = game.__player_1__
+#
+#     score = other_player_squared_difference_score(game, player)
+#
+#     player_pos = game.get_player_location(player)
+#     opponent_position = game.get_player_location(other_player)
+#
+#     partition_spaces, partition_space_strings = map_partition(game, player_pos, opponent_position)
+#     own_freedom = len(partition_spaces)
+#
+#     if posn_str(opponent_position) in partition_space_strings:
+#         if is_odd(own_freedom):
+#             result = 2 * score
+#         else:
+#             result = score
+#
+#     else:
+#         partition_spaces, partition_space_strings = map_partition(game, opponent_position, player_pos)
+#         opponent_freedom = len(partition_spaces)
+#
+#         if own_freedom > opponent_freedom:
+#             result = float("+inf")
+#         else:
+#             result = float("-inf")
+#
+#     return result
+#
+#
+# def is_odd(number):
+#
+#     return number != 2 * int(number / 2)
+#
 
 
 class CustomPlayer:
@@ -123,20 +291,62 @@ class CustomPlayer:
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
+        best_score = float("-inf")
+        best_move = (-1, -1)
+
+        if len(legal_moves) < 1:
+            return best_move
+
+        self.TIMER_THRESHOLD = 50
 
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
+
+            if not self.iterative and self.method == "minimax":
+                for move in legal_moves:
+                    next_game = game.forecast_move(move)
+                    score, _ = self.minimax(next_game, self.search_depth, False)
+                    if score > best_score:
+                        best_score = score
+                        best_move = move
+
+            elif not self.iterative and self.method == "alphabeta":
+                for move in legal_moves:
+                    next_game = game.forecast_move(move)
+                    score, _ = self.alphabeta(next_game, self.search_depth, float("-inf"), float("+inf"), False)
+                    if score > best_score:
+                        best_score = score
+                        best_move = move
+
+            elif self.iterative and self.method == "minimax":
+                depth = self.search_depth
+                while True:
+                    for move in legal_moves:
+                        score, _ = self.minimax(game.forecast_move(move), depth, False)
+                        if score > best_score:
+                            best_move = move
+                            best_score = score
+                    depth += 1
+
+            elif self.iterative and self.method == "alphabeta":
+                depth = self.search_depth
+                while True:
+                    for move in legal_moves:
+                        score, _ = self.alphabeta(game.forecast_move(move), depth, float("-inf"), float("+inf"), False)
+                        if score > best_score:
+                            best_move = move
+                            best_score = score
+                    depth += 1
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
-            pass
+            return best_move
 
         # Return the best move from the last completed search iteration
-        raise NotImplementedError
+        return best_move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -173,7 +383,28 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+
+        if depth == 0:
+            return self.score(game, self), game.__last_player_move__
+
+        best_move = (-1, -1)
+        best_value = float("-inf")
+        if not maximizing_player:
+            best_value = float("+inf")
+
+        moves = game.get_legal_moves()
+
+        for move in moves:
+            try_game = game.forecast_move(move)
+            value, _ = self.minimax(try_game, depth - 1, not maximizing_player)
+            if maximizing_player and value > best_value:
+                best_value = value
+                best_move = move
+            elif not maximizing_player and value < best_value:
+                best_value = value
+                best_move = move
+
+        return best_value, best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
@@ -217,4 +448,39 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+
+        if depth == 0:
+            value = self.score(game, game.active_player)
+            return value, game.__last_player_move__
+
+        moves = game.get_legal_moves()
+
+        if maximizing_player:
+
+            value = float("-inf")
+            move = (-1, -1)
+            for m in moves:
+                try_game = game.forecast_move(m)
+                move_value, _ = self.alphabeta(try_game, depth - 1, alpha, beta, False)
+                if move_value > value:
+                    move = m
+                    value = move_value
+                alpha = max(alpha, value)
+                if beta <= alpha:
+                    break
+            return value, move
+
+        else:
+
+            value = float("+inf")
+            move = (-1, -1)
+            for m in moves:
+                try_game = game.forecast_move(m)
+                move_value, _ = self.alphabeta(try_game, depth - 1, alpha, beta, True)
+                if move_value < value:
+                    move = m
+                    value = move_value
+                beta = min(beta, value)
+                if beta <= alpha:
+                    break
+            return value, move
